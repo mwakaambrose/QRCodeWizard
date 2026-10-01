@@ -3,8 +3,8 @@ PHPUnit 12.5.37 by Sebastian Bergmann and contributors.
 Runtime:       PHP 8.4.21
 Configuration: /Users/mwakaambrose/Code/qrcode_generator/phpunit.xml
 
-...............                                                   15 / 15 (100%)
+................                                                  16 / 16 (100%)
 
-Time: 00:00.980, Memory: 18.00 MB
+Time: 00:01.118, Memory: 18.00 MB
 
-OK (15 tests, 84 assertions)
+OK (16 tests, 87 assertions)

@@ -42,6 +42,29 @@ final class FilesystemSafetyTest extends TestCase
         }
     }
 
+    public function testAtomicWritesRespectUmaskAndPreserveExistingPermissions(): void
+    {
+        $directory = sys_get_temp_dir() . '/qr-permissions-' . bin2hex(random_bytes(6));
+        $previousUmask = umask(0022);
+        try {
+            $store = new FilesystemImageStore($directory);
+            $image = new QrImage('qr_00001.svg', 'image/svg+xml', 'first');
+            $store->save($image);
+            $path = $directory . '/qr_00001.svg';
+            clearstatcache(true, $path);
+            self::assertSame(0644, fileperms($path) & 0777);
+            chmod($path, 0640);
+            $store->save(new QrImage('qr_00001.svg', 'image/svg+xml', 'second'));
+            clearstatcache(true, $path);
+            self::assertSame(0640, fileperms($path) & 0777);
+            self::assertSame('second', $store->read('qr_00001.svg'));
+        } finally {
+            umask($previousUmask);
+            if (is_file($directory . '/qr_00001.svg')) { unlink($directory . '/qr_00001.svg'); }
+            if (is_dir($directory)) { rmdir($directory); }
+        }
+    }
+
     public function testDirectoryConflictAndUnsafeReadFailExplicitly(): void
     {
         $path = tempnam(sys_get_temp_dir(), 'qr-conflict-');

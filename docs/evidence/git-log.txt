@@ -1,3 +1,4 @@
+c533094 Mwaka Ambrose <ambrosemwaka@gmail.com> docs: explain coursework evidence and use reproducible Composer setup
 5a9ee81 Mwaka Ambrose <ambrosemwaka@gmail.com> fix: make output writes atomic and verify quality contracts
 752ec31 Mwaka Ambrose <ambrosemwaka@gmail.com> feat: expose CLI and PHP APIs with polymorphic QR adapters
 1da1765 Mwaka Ambrose <ambrosemwaka@gmail.com> refactor: introduce encapsulated domain and SOLID application contracts

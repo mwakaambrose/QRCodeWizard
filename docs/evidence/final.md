@@ -4,10 +4,11 @@ PHP 8.4.21; PHPUnit 12.5.37; PHPStan 2.2.16; Composer 2.10.2.
 
 | Check | Command | Result |
 | --- | --- | --- |
-| Behavior | `vendor/bin/phpunit --colors=never` | 15 tests, 84 assertions, exit 0 |
+| Behavior | `vendor/bin/phpunit --colors=never` | 16 tests, 87 assertions, exit 0 |
 | Quality | `vendor/bin/phpstan analyse --debug --no-progress` | Maximum level, no errors, exit 0 |
 | Metadata | `composer validate --strict` | Valid, exit 0 |
 | Syntax | `php -l` on production/examples/tests/entries | 25 files, zero failures |
+| Clean checkout | `composer install` then PHPUnit in a temporary Git archive | Install/test exit 0; 16 tests, 87 assertions |
 | Dependencies | `composer audit --locked --format=json` | See final-audit.json |
 
 Baseline PHPStan scope was the original script; final scope is all production code

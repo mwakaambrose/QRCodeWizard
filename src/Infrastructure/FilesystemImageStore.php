@@ -22,6 +22,14 @@ final readonly class FilesystemImageStore implements ImageStore
         if (!is_dir($this->directory) && !@mkdir($this->directory, 0755, true) && !is_dir($this->directory)) {
             throw new RuntimeException('Cannot create output directory: ' . $this->directory);
         }
+        $destination = $this->directory . '/' . $image->filename();
+        clearstatcache(true, $destination);
+        $permissions = 0666 & ~umask();
+        if (is_file($destination) && !is_link($destination)) {
+            $existingPermissions = @fileperms($destination);
+            if ($existingPermissions === false) { throw new RuntimeException('Cannot inspect image permissions.'); }
+            $permissions = $existingPermissions & 0777;
+        }
         $temporary = @tempnam($this->directory, '.qr-');
         if ($temporary === false) { throw new RuntimeException('Cannot create temporary image file.'); }
         try {
@@ -31,7 +39,10 @@ final readonly class FilesystemImageStore implements ImageStore
             if (@file_put_contents($temporary, $image->bytes()) !== strlen($image->bytes())) {
                 throw new RuntimeException('Cannot write complete image: ' . $image->filename());
             }
-            if (!@rename($temporary, $this->directory . '/' . $image->filename())) {
+            if (!@chmod($temporary, $permissions)) {
+                throw new RuntimeException('Cannot set image permissions.');
+            }
+            if (!@rename($temporary, $destination)) {
                 throw new RuntimeException('Cannot replace image: ' . $image->filename());
             }
         } finally {

@@ -5,7 +5,7 @@
 Repository: `git@github.com:mwakaambrose/QRCodeWizard.git`.
 Baseline: `65a17a2`. Refactor branch: `refactor/solid-coursework`.
 Technologies: PHP 8.4+, Composer, Endroid QR Code, PHPUnit, PHPStan.
-Selected component: `generate_qrcodes.php`, originally a 48-line batch script.
+Selected component: `generate_qrcodes.php`, originally a 42-line batch script.
 
 The selected feature generates labeled PNG QR codes for 00001–10000. It is useful
 as a compact coursework project because one execution path demonstrates the cost
@@ -118,7 +118,8 @@ safety: returning success should mean a complete image has been stored.
 
 **Chosen improvement:** create a temporary file inside the output directory,
 verify the complete byte count, rename it to the destination, and clean up in
-`finally`. The service contract remains unchanged. Directory permissions default to
+`finally`. The service contract remains unchanged. Existing regular-file permission bits are
+preserved; new files respect the process umask. Directory permissions default to
 0755 rather than requesting world-writable permissions.
 
 `FilesystemSafetyTest` was first run against direct writes: the symlink target was
@@ -155,7 +156,8 @@ The design makes format/storage changes local and demonstrates all requested OOP
 concepts through one focused flow. It adds indirection; that tradeoff is justified
 by actual alternate adapters and contract tests, not by the number of classes.
 
-Remaining limitations: no QR decoding test, no full production-volume benchmark,
+Remaining limitations: SVG output has no text label (Endroid writer limitation),
+no QR decoding test, no full production-volume benchmark,
 no resumable batches, no cross-batch transaction, and no untrusted-directory security
 guarantee. Memory storage retains the batch in RAM and is intended for small API
 examples/tests. The next improvement should be independent decoding of generated

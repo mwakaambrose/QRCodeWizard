@@ -5,7 +5,7 @@ creates 10,000 labeled PNGs, numbered 00001–10000, in `qrcodes/`.
 
 ## Run
 
-Requires PHP >=8.4, GD, and Composer. Development checks also need the extensions
+Requires PHP >=8.4, GD, SimpleXML, and Composer. Development checks also need the extensions
 required by PHPUnit (Composer verifies them).
 
 ```sh
@@ -20,7 +20,8 @@ php examples/php-api.php
 
 Options accept `--name=value` or `--name value`. Start/count must be positive
 canonical decimal integers, and the range must fit a PHP integer. Formats are PNG
-and SVG. Paths may contain spaces. Unknown/repeated options, missing values, and
+and SVG. PNGs include the numeric label; Endroid SVG output contains the QR symbol
+without a text label. Paths may contain spaces. Unknown/repeated options, missing values, and
 write errors return exit code 1; success/help return 0. Existing filenames are
 replaced. Choose a dedicated output directory that you control. Earlier images in
 a batch remain if a later image fails; there is no batch transaction.
