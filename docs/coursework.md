@@ -71,8 +71,8 @@ one shared definition in `EndroidImageBuilder`.
 
 **Tests before refactoring:** 1 characterization test, 10 assertions on real PNG
 output at the numbering boundaries. Production was unchanged at that stage.
-**Tests after:** see `evidence/final-tests.txt`; comparisons include byte equivalence
-with the original PNG at 00001, all default payloads, both renderers, both stores,
+**Tests after:** `composer test` reports 16 tests and 87 assertions. Comparisons
+include byte equivalence with the original PNG at 00001, all default payloads, both renderers, both stores,
 range validation, CLI behavior, and storage failure propagation.
 
 The legacy characterization harness adapts only the autoload path and loop bounds
@@ -102,9 +102,9 @@ This demonstrates a clearer contract, while output and range tests guard behavio
 
 **Other tools:** PHPUnit 12.5.37 verifies behavior; Composer 2.10.2 audit queries
 known dependency advisories against the lock file. Audits include development tools.
-Production dependency versions remain unchanged. Raw results, commands, scope,
-limitations, and versions are in `evidence/`. Zero advisories means none reported
-by that service at review time; it does not establish complete application security.
+Production dependency versions remain unchanged. Run `composer audit --locked`
+to repeat the review. Zero advisories were reported at review time; this does not
+establish complete application security.
 
 There were no further quality findings to reject or defer. Deferred project work is
 explained below rather than inventing additional warnings to increase the count.
@@ -133,15 +133,23 @@ filesystems. It is not a batch transaction or a durability guarantee after a pow
 failure, and no fsync is performed. The output directory must be controlled by the
 caller; this code is not a hostile multi-user filesystem sandbox.
 
-## 6. Evidence and commits
+## 6. Reproduce the checks and inspect commits
 
-- `evidence/baseline-tests.txt`: unchanged-script characterization results.
-- `evidence/baseline-phpstan.txt`: original type-contract diagnostic.
-- `evidence/baseline-audit.json`: initial dependency review.
-- `evidence/final-tests.txt`, `final-phpstan.txt`, `final-audit.json`: final results.
-- `evidence/final-composer.txt`, `final-lint.txt`: package and syntax verification.
-- `evidence/before.png`, `after.png`: representative 00001 PNGs; identical bytes.
-- `evidence/git-log.txt`: short implementation history.
+```sh
+composer install
+composer test
+composer analyse
+vendor/bin/phpstan analyse tests/Fixtures/legacy_generate_qrcodes.php --level=max --debug --no-progress
+composer validate --strict
+composer audit --locked
+git log --oneline 65a17a2..HEAD
+```
+
+The legacy characterization test runs the original script from `tests/Fixtures`
+at the range boundaries. `GenerationTest` compares the original and refactored
+PNG bytes for `00001`; run `composer test` to reproduce that comparison. The
+original issue and its fix can also be inspected with `git show 65a17a2:generate_qrcodes.php`
+and `src/Infrastructure/SequentialPayloadSource.php`.
 
 Retrieve the final commit with `git rev-parse HEAD`. That command avoids embedding
 an impossible self-referential final hash in its own commit. Commit boundaries show

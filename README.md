@@ -62,7 +62,7 @@ The CLI converts these exceptions into error messages and exit codes.
 | `src/Presentation` | CLI parsing, composition, errors and success output |
 | `bin`, `examples` | Executable CLI and public API demonstration |
 | `tests` | Legacy characterization, unit, contract and integration tests |
-| `docs` | Coursework argument, evidence and explanation guide |
+| `docs` | Coursework analysis, discussion brief and explanation guide |
 
 SRP separates rendering, numbering, persistence, and presentation. OCP allows adapter
 extensions. LSP is demonstrated with shared renderer/store contracts and tests. ISP
@@ -83,8 +83,8 @@ composer audit:dependencies
 
 PHPStan runs at maximum level, using `--debug` to avoid restricted worker sockets.
 Tests use temporary directories and small real renders; the default 10,000-payload
-sequence is tested without writing 10,000 files. See [evidence](docs/evidence/baseline.md)
-and [coursework](docs/coursework.md) for scope and limitations.
+sequence is tested without writing 10,000 files. See the
+[coursework analysis](docs/coursework.md) for scope, verification commands and limitations.
 
 ## Study and attribution
 

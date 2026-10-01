@@ -1,9 +1,0 @@
-9106f39 Mwaka Ambrose <ambrosemwaka@gmail.com> fix: preserve image permissions and declare SVG runtime requirements
-c533094 Mwaka Ambrose <ambrosemwaka@gmail.com> docs: explain coursework evidence and use reproducible Composer setup
-5a9ee81 Mwaka Ambrose <ambrosemwaka@gmail.com> fix: make output writes atomic and verify quality contracts
-752ec31 Mwaka Ambrose <ambrosemwaka@gmail.com> feat: expose CLI and PHP APIs with polymorphic QR adapters
-1da1765 Mwaka Ambrose <ambrosemwaka@gmail.com> refactor: introduce encapsulated domain and SOLID application contracts
-6a60b8f Mwaka Ambrose <ambrosemwaka@gmail.com> test: characterize legacy QR generation and capture baseline
-7a27751 Mwaka Ambrose <ambrosemwaka@gmail.com> docs: focus coursework on reasoning and member understanding
-d99e4e4 Mwaka Ambrose <ambrosemwaka@gmail.com> docs: plan tested SOLID refactor and coursework evidence
-c294fe4 Mwaka Ambrose <ambrosemwaka@gmail.com> docs: specify SOLID coursework refactor and public APIs

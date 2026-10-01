@@ -15,8 +15,9 @@ presentation sections only after everyone can explain the complete execution pat
    implementing an interface: behavior and failure contracts also need to agree.
 5. Read `AdapterContractTest`. Explain how the same expectations apply to each
    implementation and how a store that silently discards data would fail readback.
-6. Run `composer test` and `composer analyse`. Find the legacy str_pad diagnostic
-   in baseline evidence and the explicit conversion in SequentialPayloadSource.
+6. Run `composer test`, `composer analyse`, and
+   `vendor/bin/phpstan analyse tests/Fixtures/legacy_generate_qrcodes.php --level=max --debug --no-progress`.
+   Find the legacy str_pad diagnostic and the explicit conversion in SequentialPayloadSource.
    Explain why original weak typing worked and why the warning is still valid.
 7. Read `FilesystemSafetyTest`. Draw the symlink/target relationship and explain why
    direct writes alter the target, while rename replaces the output directory entry.
