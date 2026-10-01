@@ -1,5 +1,0 @@
-Checking non-dev platform requirements for packages in the vendor dir
-ext-gd        8.4.21   success 
-ext-iconv     8.4.21   success 
-ext-simplexml 8.4.21   success 
-php           8.4.21   success 
