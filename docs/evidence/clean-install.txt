@@ -2,12 +2,12 @@ Clean install exit: 0
 PHPUnit 12.5.37 by Sebastian Bergmann and contributors.
 
 Runtime:       PHP 8.4.21
-Configuration: /private/var/folders/l0/w9qqjc6x0q9bqtqt6m3qr2s80000gn/T/qr-clean-install-s_vh8zu_/phpunit.xml
+Configuration: /private/var/folders/l0/w9qqjc6x0q9bqtqt6m3qr2s80000gn/T/qr-clean-install-bk2ntz6c/phpunit.xml
 
-...............                                                   15 / 15 (100%)
+................                                                  16 / 16 (100%)
 
-Time: 00:00.986, Memory: 18.00 MB
+Time: 00:00.978, Memory: 18.00 MB
 
-OK (15 tests, 84 assertions)
+OK (16 tests, 87 assertions)
 
 Clean-copy tests exit: 0

@@ -1,3 +1,4 @@
+9106f39 Mwaka Ambrose <ambrosemwaka@gmail.com> fix: preserve image permissions and declare SVG runtime requirements
 c533094 Mwaka Ambrose <ambrosemwaka@gmail.com> docs: explain coursework evidence and use reproducible Composer setup
 5a9ee81 Mwaka Ambrose <ambrosemwaka@gmail.com> fix: make output writes atomic and verify quality contracts
 752ec31 Mwaka Ambrose <ambrosemwaka@gmail.com> feat: expose CLI and PHP APIs with polymorphic QR adapters
