@@ -1,0 +1,10 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+require dirname(__DIR__) . '/vendor/autoload.php';
+
+use QRCodeWizard\Presentation\GenerateCommand;
+
+exit((new GenerateCommand(dirname(__DIR__) . '/qrcodes'))->run(array_slice($argv, 1)));

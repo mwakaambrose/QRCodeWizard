@@ -1,0 +1,8 @@
+parameters:
+    level: max
+    paths:
+        - src
+        - bin/generate
+        - generate_qrcodes.php
+        - examples
+    tmpDir: .phpstan-cache
