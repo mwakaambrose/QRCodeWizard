@@ -17,6 +17,7 @@
 - Work on refactor/solid-coursework; retain author and committer Mwaka Ambrose using the configured email; omit AI co-author trailers.
 - At least four implementation commits in addition to the design/plan commits; no remote publication.
 - Record real baseline and final results; declare AI assistance in coursework documentation independently of Git authorship.
+- Favor one well-argued problem per question over broad cleanup. Questions 1-2 share the responsibility/dependency problem; Question 3 discusses one real automated finding; Question 4 evaluates atomic writes. Explain all five SOLID principles through those changes.
 
 ## Review Focus
 
@@ -113,13 +114,14 @@ try {
 
 ### Task 5: Coursework documentation and delivery
 
-**Files:** README.md, docs/coursework.md, docs/discussion-brief.md, docs/evidence/final.md.
+**Files:** README.md, docs/coursework.md, docs/discussion-brief.md, docs/member-explanation-guide.md, docs/evidence/final.md.
 
 **Interfaces:** Documentation uses actual final signatures and reproducible commands; no invented group identities, final hashes, tool findings, or screenshots.
 
 - [ ] Explain installation, PHP/GD requirements, existing command, optional CLI arguments, PHP API, folder structure, and extension examples.
 - [ ] Map Questions 1-4 to baseline code, SOLID/OOP changes, before/after test and tool results, atomic-write improvement, remaining limitations, and next improvement.
 - [ ] Include two technical discussion questions, external library acknowledgment, and AI assistance declaration. Clarify that members must understand the implementation.
+- [ ] Add a member explanation guide: trace one payload through CLI/service/renderer/store; identify each SOLID principle in concrete code; swap an adapter; explain a failing contract test; reproduce evidence; justify atomic writes and remaining limitations. Supply practice questions and expected reasoning without assigning unnamed members.
 - [ ] Record repository URL, baseline hash, and short Git history; use `git rev-parse HEAD` as the reproducible final-commit command to avoid a self-referential hash.
 - [ ] Check documented commands and examples against actual output; run the full checks once after the final code change.
 - [ ] Commit: `docs: explain SOLID concepts and coursework evidence`.

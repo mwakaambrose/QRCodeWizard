@@ -68,6 +68,18 @@ with storage failure tests. Existing output files remain replaceable as before.
 
 ## Verification and coursework evidence
 
+Prioritize reasoning and verifiable evidence over class or warning counts. Questions
+1 and 2 share one central problem: the original script mixes responsibilities and
+directly constructs dependencies, making changes and isolated testing difficult.
+Question 3 selects one meaningful finding from actual automated results for detailed
+interpretation; do not invent a warning or expand into unrelated cleanup. Question
+4 focuses on incomplete file writes and the atomic replacement improvement. Each
+argument includes a trigger, affected code, principle, consequences, chosen change,
+and evidence of its effect. All five SOLID principles and the OOP concepts remain
+demonstrated through this focused design rather than separate artificial problems.
+Include an explanation guide and exercises so every group member can trace the
+execution, justify the contracts, explain the tests, and discuss tradeoffs.
+
 Before refactoring, add characterization tests for the original builder settings,
 payload range, filenames, default command behavior, and representative PNGs. Record
 baseline results before changing implementation. Do not generate a 10,000-file batch
