@@ -22,8 +22,20 @@ final readonly class FilesystemImageStore implements ImageStore
         if (!is_dir($this->directory) && !@mkdir($this->directory, 0755, true) && !is_dir($this->directory)) {
             throw new RuntimeException('Cannot create output directory: ' . $this->directory);
         }
-        if (@file_put_contents($this->directory . '/' . $image->filename(), $image->bytes()) !== strlen($image->bytes())) {
-            throw new RuntimeException('Cannot write image: ' . $image->filename());
+        $temporary = @tempnam($this->directory, '.qr-');
+        if ($temporary === false) { throw new RuntimeException('Cannot create temporary image file.'); }
+        try {
+            if (realpath(dirname($temporary)) !== realpath($this->directory)) {
+                throw new RuntimeException('Temporary file must be in the output directory.');
+            }
+            if (@file_put_contents($temporary, $image->bytes()) !== strlen($image->bytes())) {
+                throw new RuntimeException('Cannot write complete image: ' . $image->filename());
+            }
+            if (!@rename($temporary, $this->directory . '/' . $image->filename())) {
+                throw new RuntimeException('Cannot replace image: ' . $image->filename());
+            }
+        } finally {
+            if (is_file($temporary)) { @unlink($temporary); }
         }
     }
 
