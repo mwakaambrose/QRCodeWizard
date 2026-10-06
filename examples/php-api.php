@@ -4,12 +4,23 @@ declare(strict_types=1);
 
 require dirname(__DIR__) . '/vendor/autoload.php';
 
-use QRCodeWizard\Application\GenerateBatch;
-use QRCodeWizard\Domain\BatchOptions;
-use QRCodeWizard\Infrastructure\{EndroidSvgRenderer, InMemoryImageStore, SequentialPayloadSource};
+use Endroid\QrCode\Writer\SvgWriter;
+use QRCodeWizard\QrCodeBatchGenerator;
+use QRCodeWizard\Adapters\{EndroidQrCodeImageRenderer, FolderQrCodeImageSaver};
 
-$store = new InMemoryImageStore();
-$generator = new GenerateBatch(new SequentialPayloadSource(), new EndroidSvgRenderer(), $store);
-$result = $generator->generate(new BatchOptions(start: 7, count: 2));
-echo 'Generated ' . $result->generatedCount() . " SVGs in memory.\n";
-echo 'First image: ' . strlen($store->read('qr_00007.svg')) . " bytes.\n";
+$outputFolder = sys_get_temp_dir() . '/qr-example-' . bin2hex(random_bytes(6));
+$batchGenerator = new QrCodeBatchGenerator(
+    new EndroidQrCodeImageRenderer(new SvgWriter(), 'svg'),
+    new FolderQrCodeImageSaver($outputFolder),
+);
+
+try {
+    $generatedCount = $batchGenerator->generateBatch(startNumber: 3, numberOfCodes: 5);
+    echo 'Generated ' . $generatedCount . " SVGs.\n";
+    $imageBytes = file_get_contents($outputFolder . '/qr_00007.svg');
+    if ($imageBytes === false) { throw new RuntimeException('Cannot read generated example image.'); }
+    echo 'Last image: ' . strlen($imageBytes) . " bytes.\n";
+} finally {
+    foreach (glob($outputFolder . '/*') ?: [] as $file) { unlink($file); }
+    if (is_dir($outputFolder)) { rmdir($outputFolder); }
+}

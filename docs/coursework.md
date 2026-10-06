@@ -1,177 +1,163 @@
-# CSC 3115: focused refactoring argument
+# CSC 3115: focused SOLID refactoring
 
-## 1. Project background
+## Background and original plan
 
 Repository: `git@github.com:mwakaambrose/QRCodeWizard.git`.
-Baseline: `65a17a2`. Refactor branch: `refactor/solid-coursework`.
-Technologies: PHP 8.4+, Composer, Endroid QR Code, PHPUnit, PHPStan.
-Selected component: `generate_qrcodes.php`, originally a 42-line batch script.
+Original baseline: `65a17a2`; branch: `refactor/solid-coursework`.
+Technologies: PHP 8.4+, Composer, Endroid QR Code, PHPUnit and PHPStan.
+The original generator was a 42-line batch script.
 
-The selected feature generates labeled PNG QR codes for 00001–10000. It is useful
-as a compact coursework project because one execution path demonstrates the cost
-of mixing application decisions with infrastructure. The coursework values the
-reasoning and evidence; the class count is not an improvement metric.
+The October 1 request asked for all five SOLID principles, encapsulation,
+polymorphism, interfaces, local user-facing APIs and at least four implementation
+commits. The design at `a18a09d` and plan at `dd1afc4` prescribed four architectural
+layers and additional value objects/adapters. The user subsequently requested a
+simpler design and selected exactly five production class/interface files.
 
-The PDF's administrative requirements are reference context. No group identities,
-registration numbers, assigned presentation role, or paired-group baseline have been
-supplied. Students must supply those details in their final submission. This document
-is source material for the requested implementation, not a submitted PDF/report deck.
+Recover the original planning documents without adding them to the project:
 
-## 2. Question 1: one central code issue
-
-**Issue:** the script simultaneously selects numbers, configures the QR library,
-creates a directory, writes images, and reports success. It directly constructs the
-PNG writer and Endroid builder. These are multiple reasons to change in one place,
-illustrating SRP and dependency direction/DIP.
-
-Original extract (the full original is retained in `tests/Fixtures`):
-
-```php
-for ($i = 1; $i <= 10000; $i++) {
-    $number = str_pad($i, 5, '0', STR_PAD_LEFT);
-    $builder = new Builder(writer: new PngWriter(), /* settings omitted */);
-    $result = $builder->build();
-    $result->saveToFile("{$outputDir}/qr_{$number}.png");
-}
+```sh
+git show a18a09d:docs/superpowers/specs/2026-10-01-solid-coursework-design.md
+git show dd1afc4:docs/superpowers/plans/2026-10-01-solid-coursework.md
 ```
 
-For example, adding SVG or using memory storage previously required modifying the
-same script that controlled numbering and batch behavior. Testing range selection
-also involved image rendering and filesystem effects. These are concrete costs of
-coupling; a small script is not inherently bad, but this requested extension makes
-its responsibility boundaries worth separating.
+Class count is not an improvement metric. The useful boundaries are rendering,
+persistence and batch coordination; the simplified version retains those boundaries
+and removes the four-layer structure, payload abstraction and value/result wrappers.
+`src/Contracts/` now identifies interfaces explicitly, while `src/Adapters/` contains
+the concrete Endroid and folder-saving implementations.
+The CLI and PHP API remain local; there is no HTTP service.
 
-## 3. Question 2: preserve behavior and improve the design
+## Question 1: one central issue
 
-**Chosen change:** introduce narrow contracts and constructor injection, with
-private immutable options and image values. `GenerateBatch` now coordinates:
+The original script selected numbers, configured Endroid, created an output directory,
+wrote images and printed success. Direct construction of the PNG builder coupled
+batch decisions to rendering and filesystem effects. Testing numbering required
+rendering/writes, and alternate formats required changing the same execution flow.
+This is a concrete SRP/dependency-direction issue, rather than evidence that a small
+script is inherently wrong.
 
-```php
-foreach ($this->source->payloads($options) as $payload) {
-    $this->store->save($this->renderer->render($payload));
-    ++$count;
-}
-```
+The original is retained verbatim in `tests/Fixtures/legacy_generate_qrcodes.php`.
 
-The service imports domain interfaces, not Endroid or filesystem classes. The CLI
-selects concrete adapters. Numbering stays lazy and the original PNG settings have
-one shared definition in `EndroidImageBuilder`.
+## Question 2: preserve behavior with fewer boundaries
 
-| Concept | Concrete evidence | Why it matters |
-| --- | --- | --- |
-| SRP | Source, renderer, store, command, service | A format change does not require changing numbering |
-| OCP | `QrRenderer`, `ImageStore` adapters | Supply SVG/memory via composition without editing service |
-| LSP | `AdapterContractTest`, `GenerationTest` | Both renderers/stores satisfy shared success/failure guarantees |
-| ISP | Separate `PayloadSource`, `QrRenderer`, `ImageStore` | Rendering clients need no numbering or persistence API |
-| DIP | `GenerateBatch` constructor accepts interfaces | High-level flow is independent of the QR library and disk |
-| Encapsulation | `BatchOptions`, `QrImage` private readonly state | Invalid ranges/unsafe filenames cannot be constructed |
-| Abstraction | Interfaces describe observable behavior | Consumers need not know library internals |
-| Polymorphism | Same service with PNG/SVG and memory/disk | Runtime substitutions preserve orchestration |
-| Composition | Service receives collaborating objects | No inheritance used solely to demonstrate a keyword |
-
-**Tests before refactoring:** 1 characterization test, 10 assertions on real PNG
-output at the numbering boundaries. Production was unchanged at that stage.
-**Tests after:** `composer test` reports 16 tests and 87 assertions. Comparisons
-include byte equivalence with the original PNG at 00001, all default payloads, both renderers, both stores,
-range validation, CLI behavior, and storage failure propagation.
-
-The legacy characterization harness adapts only the autoload path and loop bounds
-in a temporary copy. This limits workload while retaining the original builder and
-write path. It does not prove a complete 10,000-file execution. Byte equivalence is
-strong evidence for the tested sample, not proof for every possible QR payload.
-
-## 4. Question 3: one meaningful automated finding
-
-**Quality tool:** PHPStan 2.2.16, maximum level. Baseline scope was the original
-script; final scope is `src`, CLI entry points, and the PHP example. Configuration:
-`phpstan.neon`. The retained legacy fixture is deliberately excluded from final
-analysis because it is unchanged evidence, not production code.
-
-**Selected finding:** `argument.type` at original line 19: integer supplied to the
-string parameter of `str_pad`. Original PHP weak typing coerced it and still ran.
-This is a valid contract issue rather than a claimed runtime failure. Strict types
-in the refactor require the explicit conversion:
+`QrCodeBatchGenerator` validates start/count, formats each decimal number and coordinates:
 
 ```php
-yield str_pad((string) ($options->start() + $offset), 5, '0', STR_PAD_LEFT);
+$fileName = 'qr_' . $numberText . '.' . $imageFileExtension;
+$imageBytes = $this->imageRenderer->renderQrCodeImage($numberText);
+$this->imageSaver->saveImageFile($fileName, $imageBytes);
 ```
 
-**Decision:** fix it at the numbering boundary; do not suppress the diagnostic.
-Baseline: one PHPStan error. Final: zero errors in the larger production scope.
-This demonstrates a clearer contract, while output and range tests guard behavior.
+It accepts two injected interfaces and returns the number successfully generated
+as an integer. `EndroidQrCodeImageRenderer` keeps the original builder settings in one place
+and accepts Endroid's existing writer interface. `FolderQrCodeImageSaver` owns safe
+filenames and checked direct file writes. CLI parsing/composition lives in the existing
+entry script rather than another class.
 
-**Other tools:** PHPUnit 12.5.37 verifies behavior; Composer 2.10.2 audit queries
-known dependency advisories against the lock file. Audits include development tools.
-Production dependency versions remain unchanged. Run `composer audit --locked`
-to repeat the review. Zero advisories were reported at review time; this does not
-establish complete application security.
+| Concept | Evidence and meaning |
+| --- | --- |
+| SRP | Generator coordinates; renderer builds bytes; store persists; script handles CLI |
+| OCP | Alternate renderer/store implementations can be injected without changing generator |
+| LSP | Renderers return valid bytes for decimal payloads; stores succeed completely or throw |
+| ISP | Renderer exposes renderQrCodeImage/getImageFileExtension; saver exposes only saveImageFile |
+| DIP | Generator depends on renderer/store interfaces, not Endroid or filesystem classes |
+| Encapsulation | Private readonly dependencies; validation at generation and persistence boundaries |
+| Abstraction | Two small interfaces describe the required behavior |
+| Polymorphism | The same generator uses PNG/SVG through interchangeable Endroid writers |
+| Composition | Dependencies are supplied through constructors; no artificial inheritance |
 
-There were no further quality findings to reject or defer. Deferred project work is
-explained below rather than inventing additional warnings to increase the count.
+The renderer's supplied extension must match its writer; the CLI supplies the
+correct pair. Filesystem storage accepts safe lowercase alphanumeric extensions,
+so adding a renderer does not require widening a hardcoded PNG/SVG filename list.
+The old PHP API intentionally changes: import the generator from `QRCodeWizard`,
+interfaces from `QRCodeWizard\Contracts` and implementations from
+`QRCodeWizard\Adapters`; pass
+startNumber/numberOfCodes directly, and consume an integer rather than an options/result wrapper.
 
-## 5. Question 4: one remaining storage issue
+Verification covers the full default numbering sequence without 10,000 writes,
+integer boundaries, failure propagation, small real PNG/SVG batches, CLI parsing,
+and filesystem behavior. A PNG byte comparison against the original verifies the
+sample at 00001. Legacy characterization also renders 00001 and 10000.
 
-After responsibility separation, a checked direct write could still follow an
-existing filename symlink and overwrite its target. Interrupted writes could also
-leave partial contents. This concerns a service's persistence contract and failure
-safety: returning success should mean a complete image has been stored.
+Historical baseline before the original refactor: one characterization test with
+10 assertions; immediately before simplification: 16 tests and 87 assertions.
+Run `composer test` for the current result. Temporary legacy copies alter only the
+autoload location and loop bounds. Sample equivalence does not prove every payload
+or an entire 10,000-image run.
 
-**Chosen improvement:** create a temporary file inside the output directory,
-verify the complete byte count, rename it to the destination, and clean up in
-`finally`. The service contract remains unchanged. Existing regular-file permission bits are
-preserved; new files respect the process umask. Directory permissions default to
-0755 rather than requesting world-writable permissions.
+## Question 3: one meaningful automated finding
 
-`FilesystemSafetyTest` was first run against direct writes: the symlink target was
-changed from `keep` to `new`. The atomic implementation preserves `keep`, replaces
-the link itself with the new image, and passes the test. A failed rename into an
-existing directory preserves its contents and leaves no `.qr-*` temporary files.
-These reproduce useful failure conditions without manufacturing dependency warnings.
+PHPStan at its maximum level found an integer passed to the string parameter of
+`str_pad` in the original script. PHP's weak typing allowed it to run, but the call
+violated the declared type contract. `QrCodeBatchGenerator` explicitly casts the number to
+a string before padding; the finding is fixed rather than suppressed.
 
-Atomic rename prevents readers seeing a partly written target on ordinary local
-filesystems. It is not a batch transaction or a durability guarantee after a power
-failure, and no fsync is performed. The output directory must be controlled by the
-caller; this code is not a hostile multi-user filesystem sandbox.
+The final PHPStan scope includes `src`, both entry points and the PHP example.
+The unchanged legacy fixture is excluded from final analysis. Its original finding
+can be reproduced separately:
 
-## 6. Reproduce the checks and inspect commits
+```sh
+vendor/bin/phpstan analyse tests/Fixtures/legacy_generate_qrcodes.php --level=max --debug --no-progress
+```
+
+This command is expected to report the baseline finding and exit nonzero.
+Composer audit checks known dependency advisories, including development packages.
+Past zero-advisory results are historical; run the audit again for a current result.
+A dependency audit does not establish complete application security.
+
+## Question 4: keep saving simple and check failures
+
+The original script saved images directly. The current folder saver keeps that
+simple approach: validate the filename/content, create the output folder if needed,
+then call `file_put_contents()` and check that all bytes were written.
+
+An existing filename symlink is rejected rather than followed or replaced. Invalid
+filenames and empty bytes fail before folder creation. Directory/write failures
+throw exceptions instead of allowing the program to print a misleading success
+message. Tests cover normal creation/replacement, symlink rejection, directory
+conflicts, invalid input and normal filesystem permissions.
+
+The earlier atomic-write implementation was removed at the user's request to keep
+the program easier to understand. Writes now use ordinary filesystem behavior,
+without temporary files, permission copying or rename/cleanup steps. An interrupted
+or incomplete overwrite can leave a partial file; there is no atomic replacement,
+batch rollback or durability guarantee. Earlier batch files remain after a later
+failure. The caller must control the output folder; the symlink check is not a
+concurrent or hostile multi-user filesystem guarantee.
+
+## Reproduce and explain
 
 ```sh
 composer install
 composer test
 composer analyse
-vendor/bin/phpstan analyse tests/Fixtures/legacy_generate_qrcodes.php --level=max --debug --no-progress
 composer validate --strict
-composer audit --locked
+composer audit:dependencies
+php bin/generate --start=7 --count=2 --output=/tmp/qr-practice
+php examples/php-api.php
 git log --oneline 65a17a2..HEAD
+git rev-parse HEAD
 ```
 
-The legacy characterization test runs the original script from `tests/Fixtures`
-at the range boundaries. `GenerationTest` compares the original and refactored
-PNG bytes for `00001`; run `composer test` to reproduce that comparison. The
-original issue and its fix can also be inspected with `git show 65a17a2:generate_qrcodes.php`
-and `src/Infrastructure/SequentialPayloadSource.php`.
+For the complete execution trace, file responsibilities, SOLID/polymorphism
+explanations and test walkthrough, use the
+[group member explanation guide](member-explanation-guide.md).
+Every member should independently reproduce the checks and explain the flow.
 
-Retrieve the final commit with `git rev-parse HEAD`. That command avoids embedding
-an impossible self-referential final hash in its own commit. Commit boundaries show
-baseline tests, domain refactor, polymorphic APIs, storage safety, and documentation.
-All commits use Mwaka Ambrose's configured Git identity, with no AI co-author trailers.
+Use the [discussion brief](discussion-brief.md) to prepare the paired-group
+questions and bring evidence with its limitations. These supporting documents
+use the current five-file API and method names.
 
-## 7. Conclusion and limits
+## Limits and attribution
 
-The preserved default output is supported by baseline characterization, the full
-payload sequence test, a sample PNG byte comparison, and real small CLI batches.
-The design makes format/storage changes local and demonstrates all requested OOP
-concepts through one focused flow. It adds indirection; that tradeoff is justified
-by actual alternate adapters and contract tests, not by the number of classes.
+SVG has no numeric text label. There is no independent decoding test, complete
+production-volume benchmark, resumability, concurrency or batch transaction.
+Independent PNG decoding is a useful next verification step; benchmark before
+optimizing throughput. Keep each boundary only when its behavior earns the cost.
 
-Remaining limitations: SVG output has no text label (Endroid writer limitation),
-no QR decoding test, no full production-volume benchmark,
-no resumable batches, no cross-batch transaction, and no untrusted-directory security
-guarantee. Memory storage retains the batch in RAM and is intended for small API
-examples/tests. The next improvement should be independent decoding of generated
-PNGs to verify payload correctness; a benchmark should precede concurrency work.
-
-The submitting students must reproduce the evidence and explain each boundary.
-OpenAI Codex assisted with design, implementation, tests, and documentation. Endroid
-and its dependencies supply QR encoding/rendering. Consult their upstream licenses
-and include the AI-use declaration in the eventual report, as the brief requires.
+Students must supply group names, registration numbers, presentation role and
+paired-group details; none are invented here. Every member must understand and
+reproduce the work. These notes are source material, not a submitted report/deck.
+Endroid and its dependencies provide QR rendering; consult their upstream licenses.
+OpenAI Codex assisted with design, implementation, tests and documentation.
+Keep the AI-use declaration in the final submission independently of Git authorship.
