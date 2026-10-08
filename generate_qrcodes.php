@@ -1,42 +1,69 @@
 <?php
 
-require 'vendor/autoload.php';
+declare(strict_types=1);
 
-use Endroid\QrCode\Builder\Builder;
-use Endroid\QrCode\Encoding\Encoding;
-use Endroid\QrCode\ErrorCorrectionLevel;
-use Endroid\QrCode\Label\LabelAlignment;
-use Endroid\QrCode\Label\Font\OpenSans;
-use Endroid\QrCode\RoundBlockSizeMode;
-use Endroid\QrCode\Writer\PngWriter;
+require __DIR__ . '/vendor/autoload.php';
 
-$outputDir = __DIR__ . '/qrcodes';
-if (!is_dir($outputDir)) {
-    mkdir($outputDir, 0777, true);
-}
+use Endroid\QrCode\Writer\{PngWriter, SvgWriter};
+use QRCodeWizard\QrCodeBatchGenerator;
+use QRCodeWizard\Adapters\{EndroidQrCodeImageRenderer, FolderQrCodeImageSaver};
 
-for ($i = 1; $i <= 10000; $i++) {
-    $number = str_pad($i, 5, '0', STR_PAD_LEFT); // e.g. 00001
+$arguments = array_slice($argv, 1);
+/**
+ * Functional style: a function stored in a variable transforms input without
+ * changing external state. Invalid input throws instead of returning a value.
+ */
+$parsePositiveInteger = static function (string $optionValue): int {
+    if (!preg_match('/\A[1-9][0-9]*\z/', $optionValue)) {
+        throw new InvalidArgumentException('Start/count must be positive decimal integers.');
+    }
+    $parsedInteger = filter_var($optionValue, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+    if ($parsedInteger === false) {
+        throw new InvalidArgumentException('Start/count exceeds the PHP integer range.');
+    }
+    return $parsedInteger;
+};
 
-    $builder = new Builder(
-        writer: new PngWriter(),
-        writerOptions: [],
-        validateResult: false,
-        data: $number,
-        encoding: new Encoding('UTF-8'),
-        errorCorrectionLevel: ErrorCorrectionLevel::High,
-        size: 300,
-        margin: 10,
-        roundBlockSizeMode: RoundBlockSizeMode::Margin,
-        labelText: $number,
-        labelFont: new OpenSans(16), // You can reduce font size if it overlaps
-        labelAlignment: LabelAlignment::Center
+try {
+    if ($arguments === ['--help']) {
+        echo "Usage: php bin/generate [--count=N] [--start=N] [--output=PATH] [--format=png|svg]\n";
+        exit(0);
+    }
+    $optionValues = ['count' => '10000', 'start' => '1', 'output' => __DIR__ . '/qrcodes', 'format' => 'png'];
+    $processedOptionNames = [];
+    for ($index = 0; $index < count($arguments); ++$index) {
+        $argument = $arguments[$index];
+        if (!str_starts_with($argument, '--')) {
+            throw new InvalidArgumentException('Expected an option, received: ' . $argument);
+        }
+        $optionParts = explode('=', substr($argument, 2), 2);
+        $optionName = $optionParts[0];
+        if (!array_key_exists($optionName, $optionValues) || isset($processedOptionNames[$optionName])) {
+            throw new InvalidArgumentException('Unknown or repeated option: --' . $optionName);
+        }
+        $optionValue = $optionParts[1] ?? ($arguments[++$index] ?? '');
+        if ($optionValue === '' || str_starts_with($optionValue, '--')) {
+            throw new InvalidArgumentException('Missing value for --' . $optionName);
+        }
+        $optionValues[$optionName] = $optionValue;
+        $processedOptionNames[$optionName] = true;
+    }
+    $startNumber = $parsePositiveInteger($optionValues['start']);
+    $numberOfCodes = $parsePositiveInteger($optionValues['count']);
+    $imageRenderer = match ($optionValues['format']) {
+        'png' => new EndroidQrCodeImageRenderer(new PngWriter(), 'png'),
+        'svg' => new EndroidQrCodeImageRenderer(new SvgWriter(), 'svg'),
+        default => throw new InvalidArgumentException('Format must be png or svg.'),
+    };
+    $imageSaver = new FolderQrCodeImageSaver($optionValues['output']);
+    $batchGenerator = new QrCodeBatchGenerator($imageRenderer, $imageSaver);
+    $generatedCount = $batchGenerator->generateBatch(
+        startNumber: $startNumber,
+        numberOfCodes: $numberOfCodes,
     );
-
-    $result = $builder->build();
-
-    $filePath = "{$outputDir}/qr_{$number}.png";
-    $result->saveToFile($filePath);
+    echo '✅ Done! Generated ' . number_format($generatedCount) . ' QR codes in: ' . $optionValues['output'] . "\n";
+    exit(0);
+} catch (Throwable $exception) {
+    fwrite(STDERR, 'Error: ' . $exception->getMessage() . "\n");
+    exit(1);
 }
-
-echo "✅ Done! Generated 10,000 QR codes in: {$outputDir}\n";

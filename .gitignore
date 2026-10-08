@@ -3,5 +3,5 @@
 /.phpunit.cache/
 /.phpstan-cache/
 /.superpowers/
-/docs/evidence
 /docs/superpowers
+/docs/evidence/
