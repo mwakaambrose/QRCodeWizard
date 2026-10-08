@@ -70,6 +70,58 @@ class and method PHPDoc for the concrete principle used at each point.
 Do not claim PNG and SVG look identical: PNG includes a numeric label; SVG does not.
 The PHP caller must supply an extension matching the injected writer.
 
+### Programming paradigms
+
+**Polymorphism — one contract, different implementations.** In
+[`generate_qrcodes.php`](../generate_qrcodes.php), PNG and SVG options inject
+different Endroid writers:
+
+```php
+new EndroidQrCodeImageRenderer(new PngWriter(), 'png');
+new EndroidQrCodeImageRenderer(new SvgWriter(), 'svg');
+```
+
+Both writers implement `WriterInterface`. The same renderer builds the image using
+whichever writer it receives, and the same batch generator works with either choice.
+The generator also calls `QrCodeImageRendererInterface` and
+`QrCodeImageSaverInterface` methods without knowing their concrete implementations.
+Production has one adapter for each application interface; the two concrete
+Endroid writers demonstrate the different runtime behaviors.
+
+**Functional style — treat a function as a value.** The entry script stores an
+anonymous function in `$parsePositiveInteger`, then calls it:
+
+```php
+$startNumber = $parsePositiveInteger($optionValues['start']);
+$numberOfCodes = $parsePositiveInteger($optionValues['count']);
+```
+
+The function receives a string, returns a validated integer for valid input and
+throws for invalid input. It does not capture or modify external state, print, or
+write files. This demonstrates a first-class function and a side-effect-free
+conversion on valid inputs. An anonymous function alone is not evidence of a full
+functional architecture: the overall program remains object-oriented and uses
+imperative loops and filesystem side effects.
+
+**Structured programming — sequence, selection and iteration.** Read
+[`QrCodeBatchGenerator::generateBatch()`](../src/QrCodeBatchGenerator.php):
+
+- **Selection:** `if` rejects an invalid range.
+- **Iteration:** `for` repeats the work for the requested number of codes.
+- **Sequence:** each iteration formats the number, creates the filename, renders
+  the image and saves its bytes, in that order.
+
+```php
+$numberText = str_pad((string) ($startNumber + $numberOffset), 5, '0', STR_PAD_LEFT);
+$fileName = 'qr_' . $numberText . '.' . $imageFileExtension;
+$imageBytes = $this->imageRenderer->renderQrCodeImage($numberText);
+$this->imageSaver->saveImageFile($fileName, $imageBytes);
+```
+
+These concepts coexist: objects organize responsibilities, polymorphism chooses
+implementations, structured statements control execution, and the parser supplies
+a small functional-style element.
+
 ## 4. Explain validation and failures
 
 - CLI parsing rejects zero, negative, nonnumeric, overflowing and noncanonical integer strings, plus unknown/repeated options or missing values.

@@ -12,8 +12,8 @@ extensions needed by development tools.
 composer install
 php generate_qrcodes.php
 # Use small batches while exploring:
-php bin/generate --start=7 --count=2 --output="/tmp/my qr codes"
-php bin/generate --count=2 --format=svg --output=/tmp/qr-svg
+php bin/generate --start=7 --count=2 --output="qrcodes"
+php bin/generate --count=2 --format=svg --output="qrcodes/svgs"
 php bin/generate --help
 php examples/php-api.php
 ```
@@ -89,6 +89,19 @@ Injected renderer/store interfaces allow replacements without editing the genera
 (OCP/DIP), with narrow capabilities (ISP) and shared behavior/failure contracts (LSP).
 Private readonly dependencies demonstrate encapsulation; interfaces and Endroid's
 interchangeable PNG/SVG writers provide abstraction and polymorphism through composition.
+
+## Programming concepts
+
+| Concept | Where it appears |
+| --- | --- |
+| Polymorphism | The generator calls injected renderer/saver interfaces; the Endroid renderer uses interchangeable `PngWriter` and `SvgWriter` implementations of `WriterInterface` |
+| Functional style | `$parsePositiveInteger` in `generate_qrcodes.php` is an anonymous function stored in a variable; it converts input without changing external state |
+| Structured programming | `generateBatch()` uses `if` for selection, `for` for iteration, and ordered steps to format, render and save each image |
+
+The overall design is object-oriented with structured control flow. The parser is
+a limited functional-style example; image generation and file writing do not make
+the program a fully functional design. See the
+[member guide](docs/member-explanation-guide.md#programming-paradigms) for code examples.
 
 ## Verify
 

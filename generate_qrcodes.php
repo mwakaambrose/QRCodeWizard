@@ -9,6 +9,10 @@ use QRCodeWizard\QrCodeBatchGenerator;
 use QRCodeWizard\Adapters\{EndroidQrCodeImageRenderer, FolderQrCodeImageSaver};
 
 $arguments = array_slice($argv, 1);
+/**
+ * Functional style: a function stored in a variable transforms input without
+ * changing external state. Invalid input throws instead of returning a value.
+ */
 $parsePositiveInteger = static function (string $optionValue): int {
     if (!preg_match('/\A[1-9][0-9]*\z/', $optionValue)) {
         throw new InvalidArgumentException('Start/count must be positive decimal integers.');

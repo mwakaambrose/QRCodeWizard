@@ -32,6 +32,8 @@ final readonly class QrCodeBatchGenerator
      * Validate a range, then render and save one numbered image at a time.
      *
      * SRP: coordinates the batch; rendering and persistence remain delegated.
+     * Structured programming: if selects invalid ranges, for repeats the batch,
+     * and each iteration formats a number, renders an image, then saves it in order.
      * OCP/DIP: uses only interface methods, so adapters can be substituted.
      * LSP (Liskov Substitution): relies on the interfaces' output/failure contracts;
      * implementations must honor them, not merely declare that they implement them.

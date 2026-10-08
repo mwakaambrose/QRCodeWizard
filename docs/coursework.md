@@ -66,6 +66,13 @@ entry script rather than another class.
 | Polymorphism | The same generator uses PNG/SVG through interchangeable Endroid writers |
 | Composition | Dependencies are supplied through constructors; no artificial inheritance |
 
+The program also combines structured control flow (`if`, `for` and ordered
+format/render/save steps) with a limited functional-style parser: the anonymous
+`$parsePositiveInteger` function converts input without changing external state.
+It is primarily object-oriented, rather than a fully functional architecture.
+The [member guide](member-explanation-guide.md#programming-paradigms) locates and
+explains each programming paradigm with examples from the current code.
+
 The renderer's supplied extension must match its writer; the CLI supplies the
 correct pair. Filesystem storage accepts safe lowercase alphanumeric extensions,
 so adding a renderer does not require widening a hardcoded PNG/SVG filename list.
