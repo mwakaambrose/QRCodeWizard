@@ -10,6 +10,11 @@ use InvalidArgumentException;
 
 /**
  * Coordinates numbered QR batches without knowing how images are rendered or saved.
+ * 
+ * 1. final — Prevents inheritance. Prevents subclasses from changing intended behavior. 
+ * - Encourages composition instead of inheritance.
+ * 2. readonly — Prevents property reassignment. Makes the object immutable after construction. Can't do this;
+ * -$generator->batchSize = 200; // Error: Cannot modify readonly property
  *
  * SRP (Single Responsibility): owns the numbered batch workflow.
  * DIP (Dependency Inversion): depends on QrCodeImageRendererInterface and QrCodeImageSaverInterface abstractions.
